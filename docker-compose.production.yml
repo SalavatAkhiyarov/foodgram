@@ -24,7 +24,7 @@ services:
 
   frontend:
     image: salavatakhiyarov/foodgram_frontend:latest
-    command: sh -c "cp -r /app/build/. /static/ && echo 'Build copied'"
+    command: sh -c "cp -r /app/build/static/* /static/ && cp /app/build/index.html /static/ && echo 'Build copied'"
     volumes:
       - ./static:/static
     depends_on:
