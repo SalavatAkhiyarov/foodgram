@@ -49,7 +49,7 @@ class UserCreateSerializer(BaseUserCreateSerializer, UsernameValidationMixin):
     username = serializers.CharField(max_length=MAX_NAME_FIELD_LENGTH)
     first_name = serializers.CharField(max_length=MAX_NAME_FIELD_LENGTH)
     last_name = serializers.CharField(max_length=MAX_NAME_FIELD_LENGTH)
-  
+
     class Meta(BaseUserCreateSerializer.Meta):
         model = User
         fields = (
@@ -87,7 +87,8 @@ class RecipeIngredientReadSerializer(serializers.ModelSerializer):
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(
-        source='ingredient.measurement_unit')
+        source='ingredient.measurement_unit'
+    )
 
     class Meta:
         model = RecipeIngredient

@@ -52,60 +52,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-
+    
+    def _manage_recipe_action(self, model, user, recipe, error_post, error_delete):
+        if self.request.method == 'POST':
+            if model.objects.filter(user=user, recipe=recipe).exists():
+                return Response({'errors': error_post}, status=status.HTTP_400_BAD_REQUEST)
+            model.objects.create(user=user, recipe=recipe)
+            serializer = ShortRecipeSerializer(recipe, context={'request': self.request})
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif self.request.method == 'DELETE':
+            obj = model.objects.filter(user=user, recipe=recipe)
+            if not obj.exists():
+                return Response({'errors': error_delete}, status=status.HTTP_400_BAD_REQUEST)
+            obj.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+    
     @action(detail=True, methods=['get'], url_path='get-link', permission_classes=(AllowAny,))
     def get_link(self, request, pk=None):
         recipe = self.get_object()
         link = f'{request.build_absolute_uri("/recipes/")}{recipe.id}/'
         return Response({'short-link': link})
-
+    
     @action(detail=True, methods=['post', 'delete'], permission_classes=(IsAuthenticated,))
     def favorite(self, request, pk=None):
         recipe = self.get_object()
-        user = request.user
-        if request.method == 'POST':
-            if Favorite.objects.filter(user=user, recipe=recipe).exists():
-                return Response(
-                    {'errors': 'Рецепт уже добавлен в избранное'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            Favorite.objects.create(user=user, recipe=recipe)
-            serializer = ShortRecipeSerializer(
-                recipe, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
-            obj = Favorite.objects.filter(user=user, recipe=recipe)
-            if not obj.exists():
-                return Response(
-                    {'errors': 'Рецепта не добавлен в избранное'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return self._manage_recipe_action(Favorite, request.user, recipe, 'Рецепт уже в избранном', 'Рецепта нет в избранном')
 
     @action(detail=True, methods=['post', 'delete'], permission_classes=(IsAuthenticated,))
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
-        user = request.user
-        if request.method == 'POST':
-            if ShoppingCart.objects.filter(user=user, recipe=recipe).exists():
-                return Response(
-                    {'errors': 'Рецепт уже добавлен в корзину.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            ShoppingCart.objects.create(user=user, recipe=recipe)
-            serializer = ShortRecipeSerializer(
-                recipe, context={'request': request})
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        elif request.method == 'DELETE':
-            obj = ShoppingCart.objects.filter(user=user, recipe=recipe)
-            if not obj.exists():
-                return Response(
-                    {'errors': 'Рецепта нет в корзине.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        return self._manage_recipe_action(ShoppingCart, request.user, recipe, 'Рецепт уже в корзине', 'Рецепта нет в корзине')
 
     @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated,))
     def download_shopping_cart(self, request):
@@ -116,7 +92,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'ingredient__name',
             'ingredient__measurement_unit'
         ).annotate(total_amount=Sum('amount')).order_by('ingredient__name')
-        content = f"Список покупок для {user.first_name or user.username}\n\n"
+        content = f'Список покупок для {user.username}\n\n'
         for i, item in enumerate(ingredients, 1):
             content += f"{i}. {item['ingredient__name']} — {item['total_amount']} {item['ingredient__measurement_unit']}\n"
         response = HttpResponse(content, content_type='text/plain')

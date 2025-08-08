@@ -1,0 +1,45 @@
+version: '3.3'
+
+volumes:
+  pg_data_prod:
+  static_prod:
+  media_prod:
+
+services:
+  db:
+    image: postgres:13
+    restart: always
+    env_file: .env
+    volumes:
+      - pg_data_prod:/var/lib/postgresql/data
+
+  backend:
+    image: salavatakhiyarov/foodgram_backend:latest
+    restart: always
+    env_file: .env
+    volumes:
+      - static_prod:/static
+      - media_prod:/app/media
+    depends_on:
+      - db
+
+  frontend:
+    image: salavatakhiyarov/foodgram_frontend:latest
+    command: sh -c "cp -r /app/build/. /static/ && echo 'Build copied'"
+    volumes:
+      - static_prod:/static
+    depends_on:
+      - backend
+
+  gateway:
+    image: nginx:1.25.4-alpine
+    restart: always
+    ports:
+      - 8010:80
+    volumes:
+      - infra/nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_prod:/static
+      - media_prod:/app/media
+    depends_on:
+      - backend
+      - frontend
