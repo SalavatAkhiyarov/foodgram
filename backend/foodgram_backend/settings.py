@@ -117,7 +117,7 @@ REST_FRAMEWORK = {
 }
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/static'
+STATIC_ROOT = '/app/static'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/app/media'
