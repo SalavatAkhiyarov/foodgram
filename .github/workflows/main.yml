@@ -81,8 +81,17 @@ jobs:
         username: ${{ secrets.USER }}
         key: ${{ secrets.SSH_KEY }}
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "infra/nginx.conf"
+        source: "infra/*"
         target: "foodgram/infra"
+    - name: Remove local-only files from server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USER }}
+        key: ${{ secrets.SSH_KEY }}
+        passphrase: ${{ secrets.SSH_PASSPHRASE }}
+        script: |
+          rm -f foodgram/infra/docker-compose.yml
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
