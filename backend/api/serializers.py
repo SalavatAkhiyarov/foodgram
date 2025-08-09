@@ -44,7 +44,7 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
-class UserCreateSerializer(BaseUserCreateSerializer, UsernameValidationMixin):
+class UserCreateSerializer(UsernameValidationMixin, BaseUserCreateSerializer):
     email = serializers.EmailField(max_length=MAX_LENGTH_EMAIL)
     username = serializers.CharField(max_length=MAX_NAME_FIELD_LENGTH)
     first_name = serializers.CharField(max_length=MAX_NAME_FIELD_LENGTH)

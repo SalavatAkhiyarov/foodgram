@@ -14,4 +14,3 @@ def validate_username(value):
             f'Допустимые символы: {allowed_characters}.'
         )
     return value
-
