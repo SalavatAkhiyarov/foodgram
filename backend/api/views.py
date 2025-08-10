@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Sum
 from django.http import HttpResponse
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
@@ -18,7 +19,7 @@ from .permissions import IsAuthorOrReadOnly
 from .serializers import (IngredientSerializer, RecipeReadSerializer,
                           RecipeWriteSerializer, ShortRecipeSerializer,
                           SubscribeCreateSerializer, SubscriptionSerializer,
-                          TagSerializer, UserAvatarSerializer, UserSerializer)
+                          TagSerializer, UserAvatarSerializer)
 
 User = get_user_model()
 
@@ -86,7 +87,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def get_link(self, request, pk=None):
         recipe = self.get_object()
-        link = f'{request.build_absolute_uri("/recipes/")}{recipe.id}/'
+        link = request.build_absolute_uri(f'/s/{recipe.id}/')
         return Response({'short-link': link})
 
     @action(
@@ -146,12 +147,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return response
 
 
-class AddUserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (IsAuthenticated,)
+class AddUserViewSet(DjoserUserViewSet):
+    lookup_field = 'pk'
 
-    @action(detail=False, methods=['put', 'delete'])
+    @action(
+        detail=False,
+        methods=['put', 'delete'],
+        url_path='me/avatar',
+        permission_classes=(IsAuthenticated,)
+    )
     def avatar(self, request):
         user = request.user
         if request.method == 'PUT':
@@ -164,7 +168,12 @@ class AddUserViewSet(viewsets.ModelViewSet):
             user.avatar.delete(save=True)
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=True, methods=['post', 'delete'])
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        url_path='subscribe',
+        permission_classes=(IsAuthenticated,)
+    )
     def subscribe(self, request, pk=None):
         author = get_object_or_404(User, pk=pk)
         user = request.user
@@ -190,7 +199,12 @@ class AddUserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    @action(detail=False, methods=['get'])
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path='subscriptions',
+        permission_classes=(IsAuthenticated,)
+    )
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
             following__user=request.user).order_by('id')
@@ -203,3 +217,8 @@ class AddUserViewSet(viewsets.ModelViewSet):
         serializer = SubscriptionSerializer(
             subscriptions, many=True, context={'request': request})
         return Response(serializer.data)
+
+
+def short_link_redirect(request, recipe_id):
+    get_object_or_404(Recipe, id=recipe_id)
+    return redirect(f'/recipes/{recipe_id}/')
