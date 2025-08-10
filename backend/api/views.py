@@ -11,6 +11,7 @@ from rest_framework.response import Response
 
 from foodgram.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                              ShoppingCart, Subscription, Tag)
+
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import LimitPagination, RecipePagination
 from .permissions import IsAuthorOrReadOnly
@@ -52,38 +53,77 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
-    
-    def _manage_recipe_action(self, model, user, recipe, error_post, error_delete):
+
+    def _manage_recipe_action(
+            self, model, user, recipe, error_post, error_delete
+    ):
         if self.request.method == 'POST':
             if model.objects.filter(user=user, recipe=recipe).exists():
-                return Response({'errors': error_post}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': error_post},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             model.objects.create(user=user, recipe=recipe)
-            serializer = ShortRecipeSerializer(recipe, context={'request': self.request})
+            serializer = ShortRecipeSerializer(
+                recipe, context={'request': self.request}
+            )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif self.request.method == 'DELETE':
             obj = model.objects.filter(user=user, recipe=recipe)
             if not obj.exists():
-                return Response({'errors': error_delete}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'errors': error_delete},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             obj.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    @action(detail=True, methods=['get'], url_path='get-link', permission_classes=(AllowAny,))
+
+    @action(
+        detail=True,
+        methods=['get'],
+        url_path='get-link',
+        permission_classes=(AllowAny,)
+    )
     def get_link(self, request, pk=None):
         recipe = self.get_object()
         link = f'{request.build_absolute_uri("/recipes/")}{recipe.id}/'
         return Response({'short-link': link})
-    
-    @action(detail=True, methods=['post', 'delete'], permission_classes=(IsAuthenticated,))
+
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=(IsAuthenticated,)
+    )
     def favorite(self, request, pk=None):
         recipe = self.get_object()
-        return self._manage_recipe_action(Favorite, request.user, recipe, 'Рецепт уже в избранном', 'Рецепта нет в избранном')
+        return self._manage_recipe_action(
+            Favorite,
+            request.user,
+            recipe,
+            'Рецепт уже в избранном',
+            'Рецепта нет в избранном'
+        )
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=(IsAuthenticated,))
+    @action(
+        detail=True,
+        methods=['post', 'delete'],
+        permission_classes=(IsAuthenticated,)
+    )
     def shopping_cart(self, request, pk=None):
         recipe = self.get_object()
-        return self._manage_recipe_action(ShoppingCart, request.user, recipe, 'Рецепт уже в корзине', 'Рецепта нет в корзине')
+        return self._manage_recipe_action(
+            ShoppingCart,
+            request.user,
+            recipe,
+            'Рецепт уже в корзине',
+            'Рецепта нет в корзине'
+        )
 
-    @action(detail=False, methods=['get'], permission_classes=(IsAuthenticated,))
+    @action(
+        detail=False,
+        methods=['get'],
+        permission_classes=(IsAuthenticated,)
+    )
     def download_shopping_cart(self, request):
         user = request.user
         ingredients = RecipeIngredient.objects.filter(
@@ -94,16 +134,22 @@ class RecipeViewSet(viewsets.ModelViewSet):
         ).annotate(total_amount=Sum('amount')).order_by('ingredient__name')
         content = f'Список покупок для {user.username}\n\n'
         for i, item in enumerate(ingredients, 1):
-            content += f"{i}. {item['ingredient__name']} — {item['total_amount']} {item['ingredient__measurement_unit']}\n"
+            content += (
+                f"{i}. {item['ingredient__name']} — "
+                f"{item['total_amount']} "
+                f"{item['ingredient__measurement_unit']}\n"
+            )
         response = HttpResponse(content, content_type='text/plain')
-        response['Content-Disposition'] = 'attachment; filename="shopping_list.txt"'
+        response['Content-Disposition'] = (
+            'attachment; filename="shopping_list.txt"'
+        )
         return response
 
 
 class AddUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = (IsAuthenticated,)
 
     @action(detail=False, methods=['put', 'delete'])
     def avatar(self, request):
@@ -130,14 +176,19 @@ class AddUserViewSet(viewsets.ModelViewSet):
             serializer.save()
             author_serializer = SubscriptionSerializer(
                 author, context={'request': request})
-            return Response(author_serializer.data, status=status.HTTP_201_CREATED)
+            return Response(
+                author_serializer.data, status=status.HTTP_201_CREATED
+            )
         elif request.method == 'DELETE':
             subscription = Subscription.objects.filter(
                 user=user, author=author)
             if subscription.exists():
                 subscription.delete()
                 return Response(status=status.HTTP_204_NO_CONTENT)
-            return Response({'errors': 'Вы не были подписаны на этого пользователя.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'errors': 'Вы не были подписаны на этого пользователя'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     @action(detail=False, methods=['get'])
     def subscriptions(self, request):

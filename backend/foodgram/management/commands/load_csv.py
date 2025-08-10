@@ -1,8 +1,9 @@
-import os
 import csv
+import os
 
-from django.core.management.base import BaseCommand
 from django.conf import settings
+from django.core.management.base import BaseCommand
+
 from foodgram.models import Ingredient
 
 
@@ -20,10 +21,16 @@ class Command(BaseCommand):
             ingredients = []
             for row in reader:
                 if len(row) != 2:
-                    self.stdout.write(self.style.WARNING(f'Пропущена строка: {row}'))
+                    self.stdout.write(
+                        self.style.WARNING(f'Пропущена строка: {row}')
+                    )
                     continue
                 name, unit = row[0].strip(), row[1].strip()
                 if name and unit:
-                    ingredients.append(Ingredient(name=name, measurement_unit=unit))
+                    ingredients.append(
+                        Ingredient(name=name, measurement_unit=unit)
+                    )
         Ingredient.objects.bulk_create(ingredients, ignore_conflicts=True)
-        self.stdout.write(self.style.SUCCESS(f'Загружено {len(ingredients)} ингредиентов'))
+        self.stdout.write(
+            self.style.SUCCESS(f'Загружено {len(ingredients)} ингредиентов')
+        )

@@ -2,3 +2,6 @@
 
 По адресу http://localhost изучите фронтенд веб-приложения, а по адресу http://localhost/api/docs/ — спецификацию API.
 
+## Деплой проекта
+Проект доступен по адресу:
+https://foodgram99.duckdns.org

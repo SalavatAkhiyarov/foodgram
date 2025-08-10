@@ -4,8 +4,8 @@ from django.db import models
 
 from .constants import (INGREDIENT_NAME_MAX_LENGTH, MAX_LENGTH_EMAIL,
                         MAX_NAME_FIELD_LENGTH, MEASUREMENT_UNIT_MAX_LENGTH,
-                        RECIPE_NAME_MAX_LENGTH, TAG_NAME_SLUG_MAX_LENGTH,
-                        STR_LIMIT)
+                        RECIPE_NAME_MAX_LENGTH, STR_LIMIT,
+                        TAG_NAME_SLUG_MAX_LENGTH)
 from .validators import validate_username
 
 
