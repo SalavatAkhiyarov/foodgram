@@ -8,9 +8,11 @@ from api.views import short_link_redirect
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('s/<int:recipe_id>/', short_link_redirect, name='short_link')
+    path('s/<int:recipe_id>/', short_link_redirect, name='short_link'),
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL,
-                          document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )
