@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.functions import Lower
 
 from .constants import (INGREDIENT_NAME_MAX_LENGTH, MAX_LENGTH_EMAIL,
                         MAX_NAME_FIELD_LENGTH, MEASUREMENT_UNIT_MAX_LENGTH,
@@ -77,8 +79,28 @@ class Ingredient(models.Model):
     )
 
     class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower('name'),
+                Lower('measurement_unit'),
+                name='unique_ingredient_name_unit'
+            )
+        ]
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+
+    def clean(self):
+        if Ingredient.objects.filter(
+            name__iexact=self.name.strip(),
+            measurement_unit__iexact=self.measurement_unit.strip()
+        ).exclude(pk=self.pk).exists():
+            raise ValidationError(
+                'Такой ингредиент с этой единицей измерения уже существует'
+            )
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.name} ({self.measurement_unit})'[:STR_LIMIT]
@@ -199,6 +221,22 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'author')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'author'],
+                name='unique_subscription'
+            )
+        ]
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
+
+    def clean(self):
+        if self.user == self.author:
+            raise ValidationError('Нельзя подписаться на самого себя')
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.user} подписан на {self.author}'
