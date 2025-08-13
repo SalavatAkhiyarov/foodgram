@@ -1,13 +1,13 @@
 from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.db.models.functions import Lower
 
 from .constants import (INGREDIENT_NAME_MAX_LENGTH, MAX_LENGTH_EMAIL,
                         MAX_NAME_FIELD_LENGTH, MEASUREMENT_UNIT_MAX_LENGTH,
                         RECIPE_NAME_MAX_LENGTH, STR_LIMIT,
-                        TAG_NAME_SLUG_MAX_LENGTH)
+                        TAG_NAME_SLUG_MAX_LENGTH, MIN_POSITIVE_SMALLINT, MAX_POSITIVE_SMALLINT)
 from .validators import validate_username
 
 
@@ -129,7 +129,10 @@ class Recipe(models.Model):
     )
     tags = models.ManyToManyField(Tag, verbose_name='Теги')
     cooking_time = models.PositiveSmallIntegerField(
-        validators=(MinValueValidator(1),),
+        validators=(
+            MinValueValidator(MIN_POSITIVE_SMALLINT),
+            MaxValueValidator(MAX_POSITIVE_SMALLINT)
+        ),
         verbose_name='Время приготовления'
     )
     pub_date = models.DateTimeField(
@@ -160,7 +163,10 @@ class RecipeIngredient(models.Model):
     )
     amount = models.PositiveSmallIntegerField(
         verbose_name='Количество',
-        validators=(MinValueValidator(1),)
+        validators=(
+            MinValueValidator(MIN_POSITIVE_SMALLINT),
+            MaxValueValidator(MAX_POSITIVE_SMALLINT)
+        )
     )
 
     class Meta:

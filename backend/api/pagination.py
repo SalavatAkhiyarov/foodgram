@@ -7,8 +7,3 @@ from foodgram.constants import DEFAULT_PAGE_SIZE
 class RecipePagination(PageNumberPagination):
     page_size = DEFAULT_PAGE_SIZE
     page_size_query_param = 'limit'
-
-
-class LimitPagination(LimitOffsetPagination):
-    default_limit = DEFAULT_PAGE_SIZE
-    limit_query_param = 'limit'

@@ -12,29 +12,28 @@ class RecipeFilter(FilterSet):
         to_field_name='slug',
         queryset=Tag.objects.all()
     )
-    author = NumberFilter(field_name='author__id')
     is_in_shopping_cart = BooleanFilter(method='filter_in_shopping_cart')
     is_favorited = BooleanFilter(method='filter_is_favorited')
-
-    def filter_in_shopping_cart(self, queryset, name, value):
-        user = self.request.user
-        if user.is_anonymous:
-            return queryset.none() if value else queryset
-        if value:
-            return queryset.filter(in_shopping_carts__user=user)
-        return queryset.exclude(in_shopping_carts__user=user)
-
-    def filter_is_favorited(self, queryset, name, value):
-        user = self.request.user
-        if user.is_anonymous:
-            return queryset.none() if value else queryset
-        if value:
-            return queryset.filter(favorited_by__user=user)
-        return queryset.exclude(favorited_by__user=user)
 
     class Meta:
         model = Recipe
         fields = ('tags', 'author', 'is_in_shopping_cart', 'is_favorited')
+
+    def filter_is_favorited(self, queryset, name, value):
+        user_id = getattr(self.request.user, 'id', None)
+        if value and user_id:
+            return queryset.filter(favorited_by__user_id=user_id)
+        if not value and user_id:
+            return queryset.exclude(favorited_by__user_id=user_id)
+        return queryset.none() if value else queryset
+
+    def filter_in_shopping_cart(self, queryset, name, value):
+        user_id = getattr(self.request.user, 'id', None)
+        if value and user_id:
+            return queryset.filter(in_shopping_carts__user_id=user_id)
+        if not value and user_id:
+            return queryset.exclude(in_shopping_carts__user_id=user_id)
+        return queryset.none() if value else queryset
 
 
 class IngredientFilter(FilterSet):
