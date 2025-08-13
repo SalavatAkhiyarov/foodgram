@@ -73,21 +73,6 @@ jobs:
     steps:
     - name: Checkout repo
       uses: actions/checkout@v3
-    - name: Copy docker-compose.yml via ssh
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USER }}
-        key: ${{ secrets.SSH_KEY }}
-        passphrase: ${{ secrets.SSH_PASSPHRASE }}
-        source: "docker-compose.production.yml"
-        target: "foodgram"
-        overwrite : true
-        tar: false
-        debug : true
-    - name: Clean up tar.gz files from home directory
-      run: |
-        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} "find ~ -maxdepth 1 -name '*.tar.gz' -type f -delete"
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
