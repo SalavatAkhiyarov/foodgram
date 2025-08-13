@@ -83,6 +83,7 @@ jobs:
         source: "docker-compose.production.yml"
         target: "foodgram"
         overwrite : true
+        tar: false
         debug : true
     - name: Clean up tar.gz files from home directory
       run: |
