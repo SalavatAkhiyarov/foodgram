@@ -82,7 +82,11 @@ jobs:
         passphrase: ${{ secrets.SSH_PASSPHRASE }}
         source: "docker-compose.production.yml"
         target: "foodgram"
+        overwrite : true
         debug : true
+    - name: Clean up tar.gz files from home directory
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.USER }}@${{ secrets.HOST }} "find ~ -maxdepth 1 -name '*.tar.gz' -type f -delete"
     - name: Executing remote ssh commands to deploy
       uses: appleboy/ssh-action@master
       with:
