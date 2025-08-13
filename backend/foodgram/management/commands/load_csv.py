@@ -41,7 +41,10 @@ class Command(BaseCommand):
                         Ingredient(name=name, measurement_unit=unit)
                     )
         if ingredients_to_add:
-            Ingredient.objects.bulk_create(ingredients_to_add)
+            Ingredient.objects.bulk_create(
+                ingredients_to_add,
+                ignore_conflicts=True
+            )
             self.stdout.write(
                 self.style.SUCCESS(
                     f'Загружено {len(ingredients_to_add)} ингредиентов'

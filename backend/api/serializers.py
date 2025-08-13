@@ -2,9 +2,10 @@ from djoser.serializers import UserSerializer as DjoserUserSerializer
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from foodgram.constants import (RECIPE_NAME_MAX_LENGTH, MIN_POSITIVE_SMALLINT, MAX_POSITIVE_SMALLINT)
-from foodgram.models import (Ingredient, Recipe, RecipeIngredient,
-                             Subscription, Tag, User, Favorite, ShoppingCart)
+from foodgram.constants import (MAX_POSITIVE_SMALLINT, MIN_POSITIVE_SMALLINT,
+                                RECIPE_NAME_MAX_LENGTH)
+from foodgram.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
+                             ShoppingCart, Subscription, Tag, User)
 
 
 class UserSerializer(DjoserUserSerializer):
@@ -21,7 +22,7 @@ class UserSerializer(DjoserUserSerializer):
         return (
             request
             and request.user.is_authenticated
-            and obj.follower.filter(user=request.user).exists()
+            and obj.user_subscriptions.filter(user=request.user).exists()
         )
 
 
@@ -202,7 +203,9 @@ class SubscribeCreateSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         from .serializers import SubscriptionSerializer
-        return SubscriptionSerializer(instance.author, context=self.context).data
+        return SubscriptionSerializer(
+            instance.author, context=self.context
+        ).data
 
 
 class SubscriptionSerializer(UserSerializer):
@@ -221,7 +224,9 @@ class SubscriptionSerializer(UserSerializer):
                 recipes = recipes[:int(limit)]
             except (TypeError, ValueError):
                 pass
-        return ShortRecipeSerializer(recipes, many=True, context=self.context).data
+        return ShortRecipeSerializer(
+            recipes, many=True, context=self.context
+        ).data
 
 
 class RecipeRelationSerializer(serializers.ModelSerializer):
@@ -241,13 +246,15 @@ class RecipeRelationSerializer(serializers.ModelSerializer):
                 {'errors': self.already_exists_error}
             )
         return data
-    
+
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return self.Meta.model.objects.create(**validated_data)
 
     def to_representation(self, instance):
-        return ShortRecipeSerializer(instance.recipe, context=self.context).data
+        return ShortRecipeSerializer(
+            instance.recipe, context=self.context
+        ).data
 
 
 class FavoriteSerializer(RecipeRelationSerializer):

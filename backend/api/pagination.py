@@ -1,5 +1,4 @@
-from rest_framework.pagination import (LimitOffsetPagination,
-                                       PageNumberPagination)
+from rest_framework.pagination import PageNumberPagination
 
 from foodgram.constants import DEFAULT_PAGE_SIZE
 

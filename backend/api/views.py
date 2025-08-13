@@ -1,29 +1,31 @@
 import io
+
 from django.contrib.auth import get_user_model
-from django.db.models import Sum, Count
+from django.db.models import Count, Sum
 from django.http import FileResponse
-from django.shortcuts import get_object_or_404, redirect
-from django_filters.rest_framework import DjangoFilterBackend
-from djoser.views import UserViewSet as DjoserUserViewSet
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.encoding import smart_str
+from django_filters.rest_framework import DjangoFilterBackend
+from djoser.views import UserViewSet as DjoserUserViewSet
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import (AllowAny, IsAuthenticated,
                                         IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
-from rest_framework.pagination import LimitOffsetPagination
 
+from foodgram.constants import DEFAULT_PAGE_SIZE
 from foodgram.models import (Favorite, Ingredient, Recipe, RecipeIngredient,
                              ShoppingCart, Subscription, Tag)
-from foodgram.constants import DEFAULT_PAGE_SIZE
 from .filters import IngredientFilter, RecipeFilter
 from .pagination import RecipePagination
 from .permissions import IsAuthorOrReadOnly
-from .serializers import (IngredientSerializer, RecipeReadSerializer,
-                          RecipeWriteSerializer,
-                          SubscribeCreateSerializer, SubscriptionSerializer,
-                          TagSerializer, UserAvatarSerializer, ShoppingCartSerializer, FavoriteSerializer)
+from .serializers import (FavoriteSerializer, IngredientSerializer,
+                          RecipeReadSerializer, RecipeWriteSerializer,
+                          ShoppingCartSerializer, SubscribeCreateSerializer,
+                          SubscriptionSerializer, TagSerializer,
+                          UserAvatarSerializer)
 
 User = get_user_model()
 
@@ -73,30 +75,46 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    
+
     def _remove_from_relation(self, model, pk, not_found_error):
         recipe = get_object_or_404(Recipe, pk=pk)
-        obj, _ = model.objects.filter(user=self.request.user, recipe=recipe).delete()
+        obj, _ = model.objects.filter(
+            user=self.request.user, recipe=recipe
+        ).delete()
         if obj:
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            return Response({'errors': not_found_error}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'errors': not_found_error}, status=status.HTTP_400_BAD_REQUEST
+            )
 
-    @action(detail=True, methods=['post'], permission_classes=(IsAuthenticated,))
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=(IsAuthenticated,)
+    )
     def favorite(self, request, pk=None):
         return self._add_to_relation(FavoriteSerializer, pk)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk=None):
-        return self._remove_from_relation(Favorite, pk, 'Рецепта нет в избранном')
+        return self._remove_from_relation(
+            Favorite, pk, 'Рецепта нет в избранном'
+        )
 
-    @action(detail=True, methods=['post'], permission_classes=(IsAuthenticated,))
+    @action(
+        detail=True,
+        methods=['post'],
+        permission_classes=(IsAuthenticated,)
+    )
     def shopping_cart(self, request, pk=None):
         return self._add_to_relation(ShoppingCartSerializer, pk)
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk=None):
-        return self._remove_from_relation(ShoppingCart, pk, 'Рецепта нет в корзине')
+        return self._remove_from_relation(
+            ShoppingCart, pk, 'Рецепта нет в корзине'
+        )
 
     @action(
         detail=True,
@@ -206,10 +224,10 @@ class AddUserViewSet(DjoserUserViewSet):
             ),
             pk=pk
         )
-        deleted, _ = Subscription.objects.filter(
+        obj, _ = Subscription.objects.filter(
             user=request.user, author=author
         ).delete()
-        if deleted:
+        if obj:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': 'Вы не были подписаны на этого пользователя'},
@@ -224,7 +242,7 @@ class AddUserViewSet(DjoserUserViewSet):
     )
     def subscriptions(self, request):
         subscriptions = User.objects.filter(
-            following__user=request.user
+            subscriptions_to_author__user=request.user
         ).annotate(
             recipes_count=Count('recipes', distinct=True)
         ).order_by('username')

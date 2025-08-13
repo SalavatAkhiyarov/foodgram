@@ -1,7 +1,6 @@
 from django_filters.rest_framework import (BooleanFilter, CharFilter,
                                            FilterSet,
-                                           ModelMultipleChoiceFilter,
-                                           NumberFilter)
+                                           ModelMultipleChoiceFilter)
 
 from foodgram.models import Ingredient, Recipe, Tag
 
