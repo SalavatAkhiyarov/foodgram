@@ -1,4 +1,5 @@
-# Foodgram (https://foodgram99.duckdns.org)
+# Foodgram
+https://foodgram99.duckdns.org
 
 ## Описание
 Foodgram — это веб-сервис для обмена рецептами.
@@ -51,3 +52,5 @@ docker compose -f docker-compose.production.yml exec backend python manage.py co
 
 ## Автор
 [Салават Ахияров](https://github.com/SalavatAkhiyarov)
+
+[![Main Foodgram workflow](https://github.com/SalavatAkhiyarov/foodgram/actions/workflows/main.yml/badge.svg)](https://github.com/SalavatAkhiyarov/foodgram/actions/workflows/main.yml)

@@ -39,6 +39,7 @@ services:
       - ./infra/nginx.conf:/etc/nginx/conf.d/default.conf
       - ./static:/static
       - media_prod:/app/media
+      - ./docs/:/usr/share/nginx/html/api/docs/
     depends_on:
       - backend
       - frontend

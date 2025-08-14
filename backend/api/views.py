@@ -78,19 +78,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def _remove_from_relation(self, model, pk, not_found_error):
         recipe = get_object_or_404(Recipe, pk=pk)
-        obj, _ = model.objects.filter(
+        deleted, _ = model.objects.filter(
             user=self.request.user, recipe=recipe
         ).delete()
-        if obj:
+        if deleted:
             return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response(
-                {'errors': not_found_error}, status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response(
+            {'errors': not_found_error}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=('post',),
         permission_classes=(IsAuthenticated,)
     )
     def favorite(self, request, pk=None):
@@ -104,7 +103,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=('post',),
         permission_classes=(IsAuthenticated,)
     )
     def shopping_cart(self, request, pk=None):
@@ -118,7 +117,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=True,
-        methods=['get'],
+        methods=('get',),
         url_path='get-link',
         permission_classes=(AllowAny,)
     )
@@ -142,13 +141,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
+        methods=('get',),
         permission_classes=(IsAuthenticated,)
     )
     def download_shopping_cart(self, request):
         user = request.user
         ingredients = RecipeIngredient.objects.filter(
-            recipe__in_shopping_carts__user=user
+            recipe__shoppingcart_set__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
@@ -175,7 +174,7 @@ class AddUserViewSet(DjoserUserViewSet):
 
     @action(
         detail=False,
-        methods=['put'],
+        methods=('put',),
         url_path='me/avatar',
         permission_classes=(IsAuthenticated,)
     )
@@ -194,7 +193,7 @@ class AddUserViewSet(DjoserUserViewSet):
 
     @action(
         detail=True,
-        methods=['post'],
+        methods=('post',),
         url_path='subscribe',
         permission_classes=(IsAuthenticated,)
     )
@@ -211,10 +210,10 @@ class AddUserViewSet(DjoserUserViewSet):
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        author_payload = SubscriptionSerializer(
-            author, context={'request': request}
-        ).data
-        return Response(author_payload, status=status.HTTP_201_CREATED)
+        return Response(
+            SubscriptionSerializer(author, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
 
     @subscribe.mapping.delete
     def unsubscribe(self, request, pk=None):
@@ -224,10 +223,10 @@ class AddUserViewSet(DjoserUserViewSet):
             ),
             pk=pk
         )
-        obj, _ = Subscription.objects.filter(
+        deleted, _ = Subscription.objects.filter(
             user=request.user, author=author
         ).delete()
-        if obj:
+        if deleted:
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
             {'errors': 'Вы не были подписаны на этого пользователя'},
@@ -236,7 +235,7 @@ class AddUserViewSet(DjoserUserViewSet):
 
     @action(
         detail=False,
-        methods=['get'],
+        methods=('get',),
         url_path='subscriptions',
         permission_classes=(IsAuthenticated,)
     )

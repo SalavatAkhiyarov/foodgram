@@ -79,14 +79,14 @@ class Ingredient(models.Model):
     )
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=[
                     'name', 'measurement_unit'
                 ],
                 name='unique_ingredient_name_unit'
-            )
-        ]
+            ),
+        )
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
 
@@ -159,12 +159,12 @@ class RecipeIngredient(models.Model):
     )
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=['recipe', 'ingredient'],
                 name='unique_recipe_ingredient'
-            )
-        ]
+            ),
+        )
         verbose_name = 'Ингредиент в рецепте'
         verbose_name_plural = 'Ингредиенты в рецепте'
 
@@ -172,61 +172,47 @@ class RecipeIngredient(models.Model):
         return f'{self.ingredient.name} — {self.amount} для {self.recipe.name}'
 
 
-class Favorite(models.Model):
+class UserRecipeRelation(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='favorites',
         verbose_name='Пользователь'
     )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='favorited_by',
         verbose_name='Рецепт'
     )
 
     class Meta:
-        constraints = [
+        abstract = True
+
+    def __str__(self):
+        return f'{self._meta.verbose_name}: {self.user} — {self.recipe}'
+
+
+class Favorite(UserRecipeRelation):
+    class Meta(UserRecipeRelation.Meta):
+        constraints = (
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
                 name='unique_user_recipe_favorite'
-            )
-        ]
-        unique_together = ('user', 'recipe')
+            ),
+        )
         verbose_name = 'Избранный рецепт'
         verbose_name_plural = 'Избранные рецепты'
 
-    def __str__(self):
-        return f'{self._meta.verbose_name}: {self.user} — {self.recipe}'
 
-
-class ShoppingCart(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name='shopping_cart',
-        verbose_name='Пользователь'
-    )
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='in_shopping_carts',
-        verbose_name='Рецепт'
-    )
-
-    class Meta:
-        constraints = [
+class ShoppingCart(UserRecipeRelation):
+    class Meta(UserRecipeRelation.Meta):
+        constraints = (
             models.UniqueConstraint(
                 fields=['user', 'recipe'],
                 name='unique_user_recipe_shoppingcart'
-            )
-        ]
+            ),
+        )
         verbose_name = 'Список покупок'
         verbose_name_plural = 'Списки покупок'
-
-    def __str__(self):
-        return f'{self._meta.verbose_name}: {self.user} — {self.recipe}'
 
 
 class Subscription(models.Model):
@@ -244,12 +230,12 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        constraints = [
+        constraints = (
             models.UniqueConstraint(
                 fields=['user', 'author'],
                 name='unique_subscription'
-            )
-        ]
+            ),
+        )
         verbose_name = 'Подписка'
         verbose_name_plural = 'Подписки'
 
