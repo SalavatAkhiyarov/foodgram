@@ -22,7 +22,7 @@ class UserSerializer(DjoserUserSerializer):
         return (
             request
             and request.user.is_authenticated
-            and obj.user_subscriptions.filter(user=request.user).exists()
+            and obj.subscriptions_to_author.filter(user=request.user).exists()
         )
 
 
@@ -90,7 +90,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return (
             request
             and request.user.is_authenticated
-            and obj.favorite_set.filter(user=request.user).exists()
+            and obj.favorites.filter(user=request.user).exists()
         )
 
     def get_is_in_shopping_cart(self, obj):
@@ -98,7 +98,7 @@ class RecipeReadSerializer(serializers.ModelSerializer):
         return (
             request
             and request.user.is_authenticated
-            and obj.shoppingcart_set.filter(user=request.user).exists()
+            and obj.shoppingcarts.filter(user=request.user).exists()
         )
 
 
@@ -244,10 +244,6 @@ class RecipeRelationSerializer(serializers.ModelSerializer):
                 {'errors': f'{model._meta.verbose_name} уже добавлен'}
             )
         return data
-
-    def create(self, validated_data):
-        validated_data['user'] = self.context['request'].user
-        return self.Meta.model.objects.create(**validated_data)
 
     def to_representation(self, instance):
         return ShortRecipeSerializer(

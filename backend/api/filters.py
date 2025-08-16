@@ -21,17 +21,17 @@ class RecipeFilter(FilterSet):
     def filter_is_favorited(self, queryset, name, value):
         user_id = getattr(self.request.user, 'id', None)
         if value and user_id:
-            return queryset.filter(favorite__user_id=user_id)
+            return queryset.filter(favorites__user_id=user_id)
         if not value and user_id:
-            return queryset.exclude(favorite__user_id=user_id)
+            return queryset.exclude(favorites__user_id=user_id)
         return queryset.none() if value else queryset
 
     def filter_in_shopping_cart(self, queryset, name, value):
         user_id = getattr(self.request.user, 'id', None)
         if value and user_id:
-            return queryset.filter(shoppingcart__user_id=user_id)
+            return queryset.filter(shoppingcarts__user_id=user_id)
         if not value and user_id:
-            return queryset.exclude(shoppingcart__user_id=user_id)
+            return queryset.exclude(shoppingcarts__user_id=user_id)
         return queryset.none() if value else queryset
 
 

@@ -81,9 +81,9 @@ class Ingredient(models.Model):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                fields=[
+                fields=(
                     'name', 'measurement_unit'
-                ],
+                ),
                 name='unique_ingredient_name_unit'
             ),
         )
@@ -161,7 +161,7 @@ class RecipeIngredient(models.Model):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                fields=['recipe', 'ingredient'],
+                fields=('recipe', 'ingredient'),
                 name='unique_recipe_ingredient'
             ),
         )
@@ -186,6 +186,7 @@ class UserRecipeRelation(models.Model):
 
     class Meta:
         abstract = True
+        default_related_name = '%(class)ss'
 
     def __str__(self):
         return f'{self._meta.verbose_name}: {self.user} — {self.recipe}'
@@ -195,7 +196,7 @@ class Favorite(UserRecipeRelation):
     class Meta(UserRecipeRelation.Meta):
         constraints = (
             models.UniqueConstraint(
-                fields=['user', 'recipe'],
+                fields=('user', 'recipe'),
                 name='unique_user_recipe_favorite'
             ),
         )
@@ -207,7 +208,7 @@ class ShoppingCart(UserRecipeRelation):
     class Meta(UserRecipeRelation.Meta):
         constraints = (
             models.UniqueConstraint(
-                fields=['user', 'recipe'],
+                fields=('user', 'recipe'),
                 name='unique_user_recipe_shoppingcart'
             ),
         )
@@ -232,7 +233,7 @@ class Subscription(models.Model):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                fields=['user', 'author'],
+                fields=('user', 'author'),
                 name='unique_subscription'
             ),
         )

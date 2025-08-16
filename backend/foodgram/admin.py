@@ -45,7 +45,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
     @admin.display(description='В избранном (раз)')
     def favorites_count(self, obj):
-        return obj.favorite_set.count()
+        return obj.favorites.count()
 
     @admin.display(description='Теги')
     def display_tags(self, obj):

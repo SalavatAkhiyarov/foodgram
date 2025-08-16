@@ -68,12 +68,12 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     def _add_to_relation(self, serializer_class, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
-        data = {'user': self.request.user.id, 'recipe': recipe.id}
+        data = {'recipe': recipe.id}
         serializer = serializer_class(
             data=data, context={'request': self.request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(user=self.request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def _remove_from_relation(self, model, pk, not_found_error):
@@ -147,7 +147,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def download_shopping_cart(self, request):
         user = request.user
         ingredients = RecipeIngredient.objects.filter(
-            recipe__shoppingcart__user=user
+            recipe__shoppingcarts__user=user
         ).values(
             'ingredient__name',
             'ingredient__measurement_unit'
@@ -169,7 +169,7 @@ class AddUserViewSet(DjoserUserViewSet):
 
     def get_permissions(self):
         if self.action == 'me':
-            self.permission_classes = [IsAuthenticated]
+            self.permission_classes = (IsAuthenticated,)
         return super().get_permissions()
 
     @action(
